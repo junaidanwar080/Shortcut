@@ -13,7 +13,10 @@
                     <div id="all-reply"></div>
                     <form id="accounts_data">
                         {% csrf_token %}
-                       
+                        <div class="form-group" hidden>
+                            <label for="">User id<span style="color:red; font-weight:bold">*</span></label>
+                            <input type="text" class="form-control" name="id" id="id" value="{{user.id}}">
+                        </div>
                         <div class="form-group">
                             <label for="">Shortcut<span style="color:red; font-weight:bold">*</span></label>
                             <input type="text" class="form-control" name="Name" id="Name">

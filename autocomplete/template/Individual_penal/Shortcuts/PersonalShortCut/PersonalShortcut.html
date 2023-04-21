@@ -2,21 +2,29 @@
 <html>
 
 <head>
-    <title>Shortcuts</title>
+    <title>Personal Shortcuts</title>
 </head>
 
 <body>
-    {% include 'navbar.html' %}
-    {% include './shortcut_model.html' %}
+    {% include 'Individual_penal/Individual_NavBar.html' %}
+    {% include './PersonalShortcut_model.html' %}
+    <div style="margin-left: 400px; margin-top: 10px;">
+        <h2>Personal Shortcuts</h2>
+    </div>
+    <hr>
+
     <div style="margin-left: 100px; margin-top: 10px;">
         <label for="">Shortcut</label>
-        <input style="margin-left: 7px;" class="" id="search" >
+        <input style="margin-left: 7px;" class="" id="search">
         <!-- Add New Account Button -->
-        <button style="margin-left: 700px;" class="btn btn-sm btn-primary" id="btn_save" data-toggle="modal"
-            data-target="#add_model">Add Shortcut</button>
+        
+        <a href="/apply_individual_personal_shortcut" class="btn btn-sm btn-primary" style="margin-left:400px;">Apply Personal
+            Shortcuts</a>
+        <button style="margin-left: 10px;" class="btn btn-sm btn-success" id="btn_save" data-toggle="modal"
+            data-target="#add_model">Add Personal Shortcut</button>
     </div>
     <div id="all_accounts" style="margin-left: 100px; margin-right: 100px; margin-top: 20px;">
-       
+
     </div>
 
 
@@ -25,12 +33,12 @@
 
         $(document).ready(function () {
             $.ajaxSetup({
-				data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
-			});
+                data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+            });
             // update load button
             $(document).on("click", ".update_shortcut", function () {
                 var shortcut_id = $(this).attr('id');
-                 //alert(account_code);
+                //alert(account_code);
                 $.ajax({
                     url: 'shortcut_load_for_update/' + shortcut_id,
                     type: 'POST',
@@ -40,11 +48,11 @@
                         $("#edit_Shortcut_id").val(data.Shortcut_id)
                         $('#edit_Name').val(data.Name)
                         $('#edit_Description').val(data.Description)
-                        
+
                     }
                 });
             });
-            
+
             // insert message id become empty
             $(document).on("click", "#btn_save", function () {
                 $("#all-reply").empty();
@@ -57,7 +65,7 @@
             $("#just_insert").on("click", function () {
                 var account_form = $("#accounts_data").serialize();
                 $.ajax({
-                    url: "shortcut_insert",
+                    url: "personal_shortcut_insert",
                     type: "POST",
                     data: account_form,
                     success: function (data) {
@@ -82,7 +90,7 @@
             $("#insert_and_close").on("click", function () {
                 var account_form = $("#accounts_data").serialize();
                 $.ajax({
-                    url: "shortcut_insert",
+                    url: "personal_shortcut_insert",
                     type: "POST",
                     data: account_form,
                     success: function (data) {
@@ -150,50 +158,50 @@
                     }
                 });
             });
-            $(document).on("keyup","#search",function(){
+            $(document).on("keyup", "#search", function () {
                 let shortcut = $("#search").val();
                 $.ajax({
-                    url: "shortcut_search",
+                    url: "personal_shortcut_search",
                     type: 'POST',
-                    data: {shortcut:shortcut},
+                    data: { shortcut: shortcut },
                     success: function (data) {
                         console.log(data);
-                        
-                         $("#all_accounts").html(data);
-                         //dept_heads();
+
+                        $("#all_accounts").html(data);
+                        //dept_heads();
                     }
                 });
             });
 
-            $(document).on("click",".disable_shortcut",function(){
+            $(document).on("click", ".disable_shortcut", function () {
                 let id = $(this).attr('id');
                 $.ajax({
                     url: "shortcut_disable",
                     type: 'POST',
-                    data: {id:id},
+                    data: { id: id },
                     success: function (data) {
                         console.log(data);
-                        
-                         $("#all_accounts").html(data);
-                         dept_heads();
+
+                        $("#all_accounts").html(data);
+                        dept_heads();
                     }
                 });
             });
-           
+
             dept_heads();
-            
+
         });
 
         // Chart of accounts call
         function dept_heads() {
             $.ajax({
-                url: "shortcut_select",
+                url: "personal_shortcut_select",
                 type: 'POST',
                 //dataType: 'JSON',
                 success: function (data) {
                     console.log(data);
-                    
-                     $("#all_accounts").html(data);
+
+                    $("#all_accounts").html(data);
                 }
             });
         }
