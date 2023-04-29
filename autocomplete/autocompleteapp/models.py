@@ -25,6 +25,7 @@ class Company(models.Model):
     Company_id = models.BigAutoField(primary_key=True)
     Name = models.TextField(max_length=30, null=True, blank=True)
     Description = models.TextField(max_length=250, blank=True)
+    Company_type = models.IntegerField(null=True, blank=True)
     created_on  = models.DateField(null=True, blank=True)
     created_by = models.IntegerField(null=True,blank=True)
     Updated_on = models.DateField(null=True, blank=True)
@@ -37,6 +38,11 @@ class Userprofile(models.Model):
     created_by = models.IntegerField(null=True, blank=True)
     Updated_on = models.DateField(null=True, blank=True)
     Updated_by = models.IntegerField(null=True, blank=True)
+    Company_id = models.ForeignKey(
+        'Company', related_name='Company_no' ,null=True,
+        on_delete=models.CASCADE,
+    )
+    
 
 
 #this method to generate profile when user is created

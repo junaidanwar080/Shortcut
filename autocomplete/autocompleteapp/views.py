@@ -1,6 +1,6 @@
 from django.shortcuts import render , redirect
 from django.http import HttpResponse ,JsonResponse
-from .models import Shortcuts , Userprofile
+from .models import Shortcuts , Userprofile ,Company
 from django.contrib.auth.models import User 
 from django.contrib.auth import authenticate , login , logout
 from django.contrib.auth.decorators import login_required
@@ -114,16 +114,6 @@ def personal_shortcut_select(request):
     user = request.user
     shortcut_select = Shortcuts.objects.filter(Is_Enable=1,Shortcut_type=2,Created_by=user.id)
     return render(request,'Admin_Penal/Shortcuts/PersonalShortCut/PersonalShortcut_select.html' , {'shortcut_select':shortcut_select})
-
-# Search ShortCut
-# @login_required(login_url='/login')
-# def personal_shortcut_search(request):
-#     if request.method == 'POST':
-#         Shortcut = request.POST['shortcut']
-#         user = request.user
-#         print("came here")
-#         shortcut_select = Shortcuts.objects.filter(Name__icontains=Shortcut,Is_Enable=1,Shortcut_type=2,Created_by=user.id)
-#         return render(request,'Admin_Penal/Shortcuts/PersonalShortCut/PersonalShortcut_select.html' , {'shortcut_select':shortcut_select})
 
 #---------------------------------------------------------------------------------
 # Apply Globle ShortCut 
@@ -256,14 +246,14 @@ def insert_login(request):
             user = User.objects.get(username=username)
             user_detail = Userprofile.objects.get(user=user.id)
             assert user.check_password(password)
-            print(user , user_detail.user_type)
+            print(user , user_detail.Company_id_id)
             if user is not None:
                 login(request,user)
                 if user.is_active:
                     if user_detail.user_type=='1':
                         return redirect('/admin_dashboard',permanent=True)
                     elif user_detail.user_type=='2':
-                        return redirect('/company_penal',permanent=True)
+                        return redirect('/company_dashboard',permanent=True)
                     elif user_detail.user_type=='3':
                         return redirect('/individual_dashboard',permanent=True)
                 else:
@@ -294,11 +284,13 @@ def user_registration(request):
         if(user_id =='0'):
             is_active = 0
         else:
-            is_active=1
-        is_superuser = 1
+            is_active = 1
+        is_superuser = 0
+        Name = 'Shortcut Magic'
+        Company_type = user_type
         # 1 for globle user
         # 2 for company user
-        # 3 individual user
+        # 3 for individual user
         user_name_res = bool(re.search(r"\s", user_name))
         user_name_res = str(user_name_res)
         
@@ -311,14 +303,22 @@ def user_registration(request):
         elif ( Password != Confirm_Password):
             return JsonResponse('Password and Confirm Password are not same',safe=False)
         else:
+            # creating company
+            add_company = Company( Name = Name , Company_type = Company_type)
+            add_company.save()
+            latest_company_id = Company.objects.latest('Company_id')
+            # creating user
             register = User.objects.create_user( username = user_name, email = Email,  password = Password, is_superuser= is_superuser , is_active = is_active)
             register.save()
+            
             obj = User.objects.latest('id')
             register_complete = Userprofile.objects.get( user_id = obj.id)
             register_complete.user_type = user_type
             register_complete.created_on = y
             register_complete.created_by = user_id
+            register_complete.Company_id_id = latest_company_id.Company_id
             register_complete.save()
+            # return JsonResponse(obj.Company_id,safe=False)
             return JsonResponse("New User Created",safe=False)
         
 def user_disable(request , user_id):
@@ -336,7 +336,8 @@ def user_disable(request , user_id):
 #-------------------------------------------------------------------------------
 @login_required(login_url='/login')
 def individual_dashboard(request):
-    return render(request,'Individual_penal/Individual_Dashboard.html')
+    user = request.user
+    return render(request,'Individual_penal/Individual_Dashboard.html',{'user':user})
 #------------------------------------------------------------------------
 # Individual Personal Shortcut
 #------------------------------------------------------------------------
@@ -348,25 +349,29 @@ def individual_personal_shortcut(request):
 
 # shortcut Insert
 def personal_shortcut_insert(request):
+    user = request.user
     if request.method == 'POST':
         id = request.POST['id']
         Name = request.POST['Name']
         Description = request.POST['Description']
         Is_Enable=1
-
         Name = Name.upper()
         Shortcut_type=2 # 1 mean globel 2 mean individual
+        user_detail = Userprofile.objects.get(user=user.id)
+        Company_id_id = user_detail.Company_id_id
         if Name=='' or Description=='' :
             return JsonResponse('Plese Fill Required Fields',safe=False)
         else:
-            insert_shortcut = Shortcuts( Name = Name , Description = Description , Is_Enable=1 ,Shortcut_type=Shortcut_type, Created_on = y,Created_by = id)
+            insert_shortcut = Shortcuts( Name = Name , Description = Description , Is_Enable=1 ,Shortcut_type=Shortcut_type, Created_on = y,Created_by = id , Company_id_id = Company_id_id)
             insert_shortcut.save()
             return JsonResponse("Shortcut Created",safe=False)
 
 # shortcut select
 def personal_shortcut_select(request):
     user = request.user
-    shortcut_select = Shortcuts.objects.filter(Is_Enable=1,Shortcut_type=2,Created_by=user.id)
+    user_detail = Userprofile.objects.get(user=user.id)
+    Company_id_id = user_detail.Company_id_id
+    shortcut_select = Shortcuts.objects.filter(Is_Enable=1,Shortcut_type=2,Created_by=user.id,Company_id_id=Company_id_id)
     return render(request,'Admin_Penal/Shortcuts/PersonalShortCut/PersonalShortcut_select.html' , {'shortcut_select':shortcut_select})
 
 # Search ShortCut
@@ -385,24 +390,174 @@ def shortcut_search(request):
 def apply_individual_personal_shortcut(request):
     username = request.user.username
     return render(request,'Individual_penal/Shortcuts/PersonalShortCut/PersonalShortcutApply.html', {'username':username})
-# Search ShortCut
-@login_required(login_url='/login')
-def personal_shortcut_search(request):
-    if request.method == 'POST':
-        Shortcut = request.POST['shortcut']
-        user = request.user
-        shortcut_select = Shortcuts.objects.filter(Name__icontains=Shortcut,Is_Enable=1,Shortcut_type=2,Created_by=user.id)
-        return render(request,'Admin_Penal/Shortcuts/PersonalShortCut/PersonalShortcut_select.html' , {'shortcut_select':shortcut_select})
-        # return JsonResponse(model_to_dict(search))
 
 # Load Shortcut for Edit
 def apply_individual_personal_shortcut_val(request):
     if request.method == 'POST':
         print('came here')
         user = request.user
+        user_detail = Userprofile.objects.get(user=user.id)
+        Company_id_id = user_detail.Company_id_id
         id = request.POST['item_id']
-    shortcut_select = Shortcuts.objects.get(Name=id,Is_Enable=1,Shortcut_type=2,Created_by=user.id)
+    shortcut_select = Shortcuts.objects.get(Name=id,Is_Enable=1,Shortcut_type=2,Created_by=user.id,Company_id_id=Company_id_id)
     return JsonResponse(model_to_dict(shortcut_select))
+
+#-------------------------------------------------------------------------------
+# Company
+#-------------------------------------------------------------------------------
+@login_required(login_url='/login')
+def company_dashboard(request):
+    user = request.user
+    return render(request,'Company_penal/Company_Dashboard.html',{'user':user})
+
+#------------------------------------------------------------------------
+# Company Personal Shortcut
+#------------------------------------------------------------------------
+# shortcut page call
+@login_required(login_url='/login')
+def company_personal_shortcut(request):
+    user = request.user
+    return render(request,'Company_penal/Shortcuts/PersonalShortCut/PersonalShortcut.html',{'user':user})
+
+# Company Personal shortcut select
+def company_personal_shortcut_select(request):
+    user = request.user
+    user_detail = Userprofile.objects.get(user=user.id)
+    Company_id_id = user_detail.Company_id_id
+    shortcut_select = Shortcuts.objects.filter(Is_Enable=1,Shortcut_type=2,Created_by=user.id,Company_id_id=Company_id_id)
+    return render(request,'Company_penal/Shortcuts/PersonalShortCut/PersonalShortcut_select.html' , {'shortcut_select':shortcut_select})
+
+#------------------------------------------------------------------------
+# Company Global Shortcut
+#------------------------------------------------------------------------
+# shortcut page call
+@login_required(login_url='/login')
+def company_globle_shortcut(request):
+    user = request.user
+    return render(request,'Company_penal/Shortcuts/GlobalShortcut/GlobalShortcuts.html',{'user':user})
+
+# Company Global Shortcut select
+def company_globle_shortcut_select(request):
+    shortcut_select = Shortcuts.objects.filter(Is_Enable=1,Shortcut_type=1)
+    return render(request,'Company_penal/Shortcuts/GlobalShortcut/global_shortcut_select.html' , {'shortcut_select':shortcut_select})
+
+# Company Global Shortcut Search
+@login_required(login_url='/login')
+def company_globle_shortcut_search(request):
+    if request.method == 'POST':
+        Shortcut = request.POST['shortcut']
+        shortcut_select = Shortcuts.objects.filter(Name__icontains=Shortcut,Is_Enable=1,Shortcut_type=1)
+        return render(request,'Company_penal/Shortcuts/GlobalShortcut/global_shortcut_select.html' , {'shortcut_select':shortcut_select})
+
+#---------------------------------------------------------------------------------
+# Apply Company Global ShortCut 
+#---------------------------------------------------------------------------------
+# Search Global ShortCut Page
+@login_required(login_url='/login')
+def apply_company_globle_shortcut_page(request):
+    username = request.user.username
+    return render(request,'Company_penal/Shortcuts/GlobalShortcut/GlobalShortcutApply.html', {'username':username})
+
+# Load Shortcut for Edit
+def apply_company_globle_shortcut(request):
+    if request.method == 'POST':
+        print('came here')
+        id = request.POST['item_id']
+    shortcut_select = Shortcuts.objects.get(Name=id,Is_Enable=1,Shortcut_type=1)
+    return JsonResponse(model_to_dict(shortcut_select))
+
+#---------------------------------------------------------------------------------
+# Apply Company Personal ShortCut 
+#---------------------------------------------------------------------------------
+# Apply personal ShortCut Page load
+@login_required(login_url='/login')
+def apply_company_personal_shortcut_page(request):
+    username = request.user.username
+    return render(request,'Company_penal/Shortcuts/PersonalShortCut/PersonalShortcutApply.html', {'username':username})
+
+# Load Shortcut for Edit
+def apply_company_personal_shortcut(request):
+    if request.method == 'POST':
+        print('came here')
+        user = request.user
+        user_detail = Userprofile.objects.get(user=user.id)
+        Company_id_id = user_detail.Company_id_id
+        id = request.POST['item_id']
+    shortcut_select = Shortcuts.objects.get(Name=id,Is_Enable=1,Shortcut_type=2,Created_by=user.id,Company_id_id=Company_id_id)
+    return JsonResponse(model_to_dict(shortcut_select))
+
+#---------------------------------------------------------------------------------
+# Users
+#---------------------------------------------------------------------------------
+# User
+@login_required(login_url='/login')
+def company_users(request):
+    user = request.user
+    return render(request,'Company_penal/User/CompanyUsers.html')
+
+# Load data User 
+# @login_required(login_url='/login')
+# def user_profile(request , id):
+#     username = request.user.username
+#     return render(request,'Admin_Penal/User/user_profile.html',{'username':username })
+
+# Edit User Profile
+# def update_user_profile(request):
+#     if request.method == "POST":
+#         edit_user_id = request.POST['user_id']
+#         fname = request.POST['fname']
+#         lname = request.POST['lname']
+#         if (fname=='' or lname==''):
+#             return JsonResponse("Please Fill Required Fields",safe=False)
+#         else:
+#             user_id = User.objects.get( id = edit_user_id)
+#             user_id.first_name = fname
+#             user_id.last_name = lname
+#             user_id.save()
+            
+            
+#             return JsonResponse("User Data Saved",safe=False)
+        
+def select_company_users(request):
+    user = request.user
+    user_detail = Userprofile.objects.get(user=user.id)
+    Company_id_id = user_detail.Company_id_id
+    print(Company_id_id)
+    allusers = Userprofile.objects.filter(Company_id_id=Company_id_id)
+    return render(request,'Admin_Penal/User/select_all_users.html', {'User_table': allusers})
+
+#--------------------------------------------------------------------------------------
+# User
+#---------------------------------------------------------------------------------
+# @login_required(login_url='/login')
+# def user_profile1(request , user_id):
+#     username = request.user.username
+#     return render(request,'user_penal/registration_form.html',{'username':username})
+        
+# Edit User Profile
+# def edit_user_profile(request):
+#     if request.method == "POST":
+#         user_id = request.POST['user_id']
+#         fname = request.POST['fname']
+#         lname = request.POST['lname']
+#         room_id = request.POST['room_id']
+#         cnic = request.POST['cnic']
+#         contact = request.POST['contact']
+#         temporary_address = request.POST['temporary_address']
+#         permanent_address = request.POST['permanent_address']
+#         emergency_contact = request.POST['emergency_contact']
+#         birth_date = request.POST['birth_date']
+#         guardian_name = request.POST['guardian_name']
+#         Guardian_contact = request.POST['Guardian_contact']
+#         Guardian_relation = request.POST['Guardian_relation']
+#         if (fname=='' or lname=='' or cnic=='' or contact=='' or permanent_address=='' or emergency_contact=='' or birth_date=='' or guardian_name=='' or Guardian_relation==''):
+#             return JsonResponse("Please Fill Required Fields",safe=False)
+#         else:
+#             user_id = User.objects.get( id = user_id)
+#             user_id.first_name = fname
+#             user_id.last_name = lname
+#             user_id.save()
+#             return JsonResponse("User Data Saved",safe=False)
 
 #-------------------------------------------------------------------------------
 # Public

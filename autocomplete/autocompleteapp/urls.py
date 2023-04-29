@@ -55,7 +55,40 @@ urlpatterns = [
 # search Shortut
     path('apply_individual_personal_shortcut',views.apply_individual_personal_shortcut),
     path('apply_individual_personal_shortcut_val',views.apply_individual_personal_shortcut_val),
-
+# ------------------------------------------------------------------------------------------------
+# User Profile
+# ------------------------------------------------------------------------------------------------
+# User
+    path('users', views.users, name='users' ),
+    path('select_all_users', views.select_all_users), 
+    
+# ------------------------------------------------------------------------------------------------
+# Company 
+# ------------------------------------------------------------------------------------------------
+# Company Dashboard
+    path('company_dashboard',views.company_dashboard),
+# ------------------------------------------------------------------------------------------------
+# Company Personal Shortcuts
+# ------------------------------------------------------------------------------------------------
+    path('company_personal_shortcut',views.company_personal_shortcut,name='company_personal_shortcut'),
+    path('company_personal_shortcut_select',views.company_personal_shortcut_select),
+# Apply Company Global Shortcuts
+    path('apply_company_personal_shortcut_page',views.apply_company_personal_shortcut_page),
+    path('apply_company_personal_shortcut',views.apply_company_personal_shortcut),
+# ------------------------------------------------------------------------------------------------
+# Company Global Shortcuts
+# ------------------------------------------------------------------------------------------------
+    path('company_globle_shortcut',views.company_globle_shortcut,name='company_globle_shortcut'),
+    path('company_globle_shortcut_select',views.company_globle_shortcut_select),
+    path('company_globle_shortcut_search',views.company_globle_shortcut_search),
+# Apply Company Global Shortcuts
+    path('apply_company_globle_shortcut_page',views.apply_company_globle_shortcut_page),
+    path('apply_company_globle_shortcut',views.apply_company_globle_shortcut),
+# ------------------------------------------------------------------------------------------------
+# Company Users
+# ------------------------------------------------------------------------------------------------
+    path('company_users', views.company_users, name='company_users' ),
+    path('select_company_users', views.select_company_users), 
 # ------------------------------------------------------------------------------------------------
 # Login , Logout , User Registraion
 # ------------------------------------------------------------------------------------------------
